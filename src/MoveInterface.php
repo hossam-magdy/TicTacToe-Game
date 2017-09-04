@@ -1,5 +1,7 @@
 <?php
 
+namespace TicTacToe;
+
 interface MoveInterface
 {
     /**
