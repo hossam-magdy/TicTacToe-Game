@@ -1,6 +1,6 @@
 <?php
 
-namespace AppBundle;
+namespace TicTacToe;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 

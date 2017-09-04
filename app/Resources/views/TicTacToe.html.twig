@@ -1,0 +1,145 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Tic Tac Toe Game</h1>
+    <table class="tictactoe">
+        <tr>
+            <td class="boardPos" data-row="0" data-col="0"></td>
+            <td class="boardPos" data-row="0" data-col="1"></td>
+            <td class="boardPos" data-row="0" data-col="2"></td>
+        </tr>
+        <tr>
+            <td class="boardPos" data-row="1" data-col="0"></td>
+            <td class="boardPos" data-row="1" data-col="1"></td>
+            <td class="boardPos" data-row="1" data-col="2"></td>
+        </tr>
+        <tr>
+            <td class="boardPos" data-row="2" data-col="0"></td>
+            <td class="boardPos" data-row="2" data-col="1"></td>
+            <td class="boardPos" data-row="2" data-col="2"></td>
+        </tr>
+    </table>
+    <div class="status"></div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function () {
+            boardToDOM([['', '', ''], ['', '', ''], ['', '', '']]);
+            $('.tictactoe tr td').each(function () {
+                $(this).click(function () {
+                    posClicked($(this).attr("data-row"), $(this).attr("data-col"));
+                });
+            });
+        });
+
+        function boardToDOM(board) {
+            for (var i = 0; i < board.length; i++) {
+                for (var j = 0; j < board[i].length; j++) {
+                    $('.boardPos[data-row=' + i + '][data-col=' + j + ']').text(board[i][j]);
+                }
+            }
+        }
+
+        function DOMToBoard() {
+            var board = [];
+            $('.boardPos').each(function () {
+                if (!board[$(this).attr('data-row')]) {
+                    board[$(this).attr('data-row')] = [];
+                }
+                board[$(this).attr('data-row')][$(this).attr('data-col')] = $(this).text();
+            });
+            return board;
+        }
+
+        function isGameOver() {
+            if ($('.status').text().match(/winner/))
+                return true;
+            return false;
+        }
+
+        function announceWinner(winner, winningCase) {
+            var status = $('.status');
+            status.html('The winner is: ' + winner + '<br>');
+            if (winningCase) {
+                for (var i = 0; i < winningCase.length; i++) {
+                    $('.boardPos[data-row=' + winningCase[i][0] + '][data-col=' + winningCase[i][1] + ']').css('backgroundColor', '#AAFFAA');
+                }
+            }
+            var again = $('<a href="#">Play again!</a>');
+            again.click(function () {
+                $('.status').html('');
+                $('.boardPos').text('').css('backgroundColor', '');
+            });
+            again.appendTo(status);
+        }
+
+        function posClicked(row, col) {
+            if (isGameOver()) return;
+            var board = DOMToBoard();
+            if (board[row][col] == '') {
+                board[row][col] = 'X';
+                boardToDOM(board);
+                $.post("{{ url('make_move') }}", {'boardState': JSON.stringify(board), 'playerUnit': 'O'})
+                    .done(function (data) {
+                        console.log(data);
+//                    data = JSON.parse(data);
+//                    console.log(data);
+                        if (data['move']) {
+                            board[data['move'][1]][data['move'][0]] = data['move'][2];
+                            boardToDOM(board);
+                        }
+                        if (data['winner']) {
+                            announceWinner(data['winner'], data['winningCase']);
+                        }
+                    })
+                    .fail(function () {
+                        alert("error");
+                    });
+            }
+        }
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial;
+            font-weight: normal;
+        }
+
+        .status {
+            margin: 10px;
+        }
+
+        .status a {
+            color: #3254b5;
+        }
+
+        table.tictactoe {
+            margin: auto;
+        }
+
+        table.tictactoe, table.tictactoe tr td {
+            border-width: 1px;
+            border-style: solid;
+            border-color: #868686;
+        }
+
+        table.tictactoe tr td {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            vertical-align: middle;
+            cursor: pointer;
+            font-size: 2em;
+            color: #636363;
+        }
+        table.tictactoe tr td:hover {
+            background-color: #aacd4e;
+        }
+    </style>
+{% endblock %}
